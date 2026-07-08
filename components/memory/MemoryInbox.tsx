@@ -28,18 +28,18 @@ export function MemoryInbox({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -420, opacity: 0 }}
           transition={{ duration: 0.22 }}
-          className="fixed left-3 top-20 z-50 flex h-[calc(100dvh-6rem)] w-[min(92vw,420px)] flex-col overflow-hidden rounded-[10px] border hairline bg-[rgba(16,19,22,0.96)] shadow-2xl shadow-black/40 backdrop-blur-xl"
+          className="fixed left-20 top-5 z-50 flex h-[calc(100dvh-2.5rem)] w-[min(92vw,420px)] flex-col overflow-hidden rounded-[24px] border border-[var(--line)] bg-[rgba(255,255,255,0.96)] shadow-[0_28px_90px_rgba(58,49,35,0.22)] backdrop-blur-xl"
         >
-          <div className="flex items-start justify-between border-b hairline p-4">
+          <div className="flex items-start justify-between border-b border-[var(--line)] p-5">
             <div>
-              <p className="mono text-[11px] text-[var(--moss)]">memory inbox</p>
-              <h2 className="mt-1 text-lg font-semibold">Proposed memories</h2>
+              <p className="text-sm text-[var(--muted)]">Memory inbox</p>
+              <h2 className="mt-1 text-xl font-semibold text-[var(--ink)]">Proposed memories</h2>
               <p className="mt-1 text-xs text-[var(--muted)]">Nothing becomes memory until you approve it.</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="focus-ring grid h-8 w-8 place-items-center rounded-[6px] border hairline text-[var(--muted)] transition hover:bg-white/5 hover:text-[var(--text)]"
+              className="focus-ring grid h-9 w-9 place-items-center rounded-full text-[var(--muted)] transition hover:bg-[var(--canvas-2)] hover:text-[var(--ink)]"
               aria-label="Close memory inbox"
             >
               <X size={16} />

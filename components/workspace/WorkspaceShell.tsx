@@ -1,19 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Command, Inbox, Lock, Search } from "lucide-react";
-import { AgentSidecar } from "@/components/agent/AgentSidecar";
+import { AgentPill, AgentSidecar } from "@/components/agent/AgentSidecar";
 import { ContextPacketInspector } from "@/components/context/ContextPacketInspector";
-import { ContextTray } from "@/components/context/ContextTray";
+import { ContextPill } from "@/components/context/ContextTray";
 import { MemoryInbox } from "@/components/memory/MemoryInbox";
 import { compileContextPacket } from "@/lib/context/compiler";
 import { memories as seedMemories, sources } from "@/lib/context/mock-data";
 import type { ActiveSurface, ContextRequest, Memory, ModelTarget, PrivacyMode, Sensitivity } from "@/lib/context/types";
 import { CommandPaletteMock } from "./CommandPaletteMock";
-import { FileRail } from "./FileRail";
-import { ModelRouterPanel } from "./ModelRouterPanel";
-import { PrivacyModeSelector } from "./PrivacyModeSelector";
-import { SpaceSwitcher } from "./SpaceSwitcher";
+import { SlimRail } from "./FileRail";
 import { UniversalViewer } from "./viewers";
 
 const maxTokens = 2200;
@@ -42,12 +38,13 @@ function allowedSensitivity(privacyMode: PrivacyMode, modelTarget: ModelTarget):
 export function WorkspaceShell() {
   const [space, setSpace] = useState("Startup");
   const [activeId, setActiveId] = useState("financial-model-forecast");
-  const [privacyMode, setPrivacyMode] = useState<PrivacyMode>("fully_local");
-  const [modelTarget, setModelTarget] = useState<ModelTarget>("local");
+  const [privacyMode] = useState<PrivacyMode>("fully_local");
+  const [modelTarget] = useState<ModelTarget>("local");
   const [memoryState, setMemoryState] = useState<Memory[]>(seedMemories);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
 
   const activeSource = sources.find((source) => source.id === activeId) ?? sources[0];
   const activeSurface = (activeSource.surface ?? "workspace") as ActiveSurface;
@@ -81,6 +78,7 @@ export function WorkspaceShell() {
       if (event.key === "Escape") {
         setInspectorOpen(false);
         setPaletteOpen(false);
+        setAgentOpen(false);
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -89,6 +87,15 @@ export function WorkspaceShell() {
 
   function compile() {
     setPacket(compileContextPacket(request, sources, memoryState));
+  }
+
+  function selectFile(id: string) {
+    const next = sources.find((source) => source.id === id);
+    setActiveId(id);
+    if (next?.space && ["Startup", "Personal", "Work"].includes(next.space)) {
+      setSpace(next.space);
+    }
+    setAgentOpen(false);
   }
 
   function approveMemory(id: string) {
@@ -100,78 +107,36 @@ export function WorkspaceShell() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-[1500px] flex-col gap-3 p-3 sm:p-4">
-      <div className="surface flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-[7px] border hairline bg-[var(--panel-2)]">
-            <Lock size={16} className="text-[var(--moss)]" />
-          </span>
+    <main className="flex h-dvh overflow-hidden bg-[var(--canvas)] text-[var(--ink)]">
+      <SlimRail activeId={activeId} activeSpace={space} onSelect={selectFile} onSpaceChange={setSpace} onCommand={() => setPaletteOpen(true)} />
+
+      <section className="relative flex min-w-0 flex-1 flex-col p-4 md:p-6">
+        <div className="mb-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">Ekiek local workspace</p>
-            <p className="truncate text-xs text-[var(--muted)]">{request.task}</p>
+            <p className="truncate text-sm text-[var(--muted)]">{space} / {activeSurface}</p>
+            <h1 className="truncate text-2xl font-semibold tracking-[-0.02em] text-[var(--ink)]">{activeSource.title}</h1>
           </div>
+          <ContextPill packet={packet} onInspect={() => setInspectorOpen(true)} />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border hairline px-3 text-sm text-[var(--paper-muted)] transition hover:bg-white/5 active:translate-y-px"
-          >
-            <Search size={15} />
-            <span>Command</span>
-            <span className="mono rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-[var(--muted)]">Cmd K</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setMemoryOpen(true)}
-            className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border hairline px-3 text-sm text-[var(--paper-muted)] transition hover:bg-white/5 active:translate-y-px"
-          >
-            <Inbox size={15} />
-            Memory inbox
-          </button>
-          <button
-            type="button"
-            onClick={compile}
-            className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] bg-[var(--paper)] px-3 text-sm font-medium text-[#15130f] transition hover:bg-white active:translate-y-px"
-          >
-            <Command size={15} />
-            Compile
-          </button>
-        </div>
-      </div>
 
-      <div className="grid flex-1 gap-3 lg:grid-cols-[260px_minmax(0,1fr)_360px]">
-        <aside className="surface flex flex-col gap-4 p-3">
-          <div>
-            <p className="mono mb-2 text-[10px] text-[var(--muted)]">Spaces</p>
-            <SpaceSwitcher active={space} onChange={setSpace} />
-          </div>
-          <div className="min-h-0 flex-1">
-            <p className="mono mb-2 text-[10px] text-[var(--muted)]">Files and surfaces</p>
-            <FileRail activeId={activeId} onSelect={setActiveId} />
-          </div>
-          <div className="space-y-4 border-t hairline pt-3">
-            <ModelRouterPanel value={modelTarget} onChange={setModelTarget} />
-            <PrivacyModeSelector value={privacyMode} onChange={setPrivacyMode} />
-          </div>
-        </aside>
-
-        <section className="surface min-h-[660px] overflow-hidden">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_24px_90px_rgba(58,49,35,0.12)]">
           <UniversalViewer source={activeSource} />
-        </section>
+          <div className="absolute right-5 top-24">
+            <AgentPill surface={activeSurface} packet={packet} onOpen={() => setAgentOpen(true)} />
+          </div>
+        </div>
+      </section>
 
-        <AgentSidecar
-          surface={activeSurface}
-          packet={packet}
-          request={request}
-          onCompile={compile}
-          onInspect={() => setInspectorOpen(true)}
-          onOpenMemory={() => setMemoryOpen(true)}
-        />
-      </div>
-
-      <ContextTray packet={packet} maxTokens={maxTokens} onInspect={() => setInspectorOpen(true)} />
-
+      <AgentSidecar
+        open={agentOpen}
+        surface={activeSurface}
+        packet={packet}
+        request={request}
+        onClose={() => setAgentOpen(false)}
+        onInspect={() => setInspectorOpen(true)}
+        onOpenMemory={() => setMemoryOpen(true)}
+        onRecompile={compile}
+      />
       <ContextPacketInspector open={inspectorOpen} packet={packet} request={request} onClose={() => setInspectorOpen(false)} />
       <MemoryInbox
         open={memoryOpen}
@@ -181,6 +146,6 @@ export function WorkspaceShell() {
         onReject={rejectMemory}
       />
       <CommandPaletteMock open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-    </div>
+    </main>
   );
 }
