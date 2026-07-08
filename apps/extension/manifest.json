@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Ekiek Local Sidecar",
+  "version": "0.1.0",
+  "description": "Docked local-first Ekiek sidecar for capturing selected page context.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://localhost:47321/*"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.ts"],
+      "run_at": "document_idle"
+    }
+  ]
+}
