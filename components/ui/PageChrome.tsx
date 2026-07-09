@@ -33,7 +33,7 @@ export function PageChrome({ children }: { children: React.ReactNode }) {
             href="/app"
             className="focus-ring inline-flex items-center rounded-[10px] bg-[var(--ink)] px-4 py-2 text-sm font-medium text-[var(--canvas)] transition hover:bg-black active:translate-y-px"
           >
-            Open workspace
+            Open agent
           </Link>
         </div>
       </header>
